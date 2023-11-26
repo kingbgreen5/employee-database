@@ -1,6 +1,9 @@
 
 const mysql = require('mysql2');
 const inquirer = require('inquirer');
+//                                                        FUNCTIONS WHICH PREFORM QUERIES INTO THE DB
+// const { viewAllDepartments, addDepartment, writeToFile } = require('./queryfunct/query');
+
 
 const db = mysql.createConnection(
   {
@@ -18,10 +21,6 @@ const questions = [
   'What would you like to do?'
   ];
 
-
-
-
-
 function init() {                                           // Initialize 
   inquirer
   .prompt([
@@ -29,7 +28,7 @@ function init() {                                           // Initialize
           type: 'list',
           message: questions[0],
           name: 'doWhat', 
-          choices: ['View Departments', 'View Roles','View Employees','Add a Department', 'Add a role, add an employee', 'Update an employee role']
+          choices: ['View Departments', 'View Roles','View Employees','Add a Department', 'Add a Role', 'Add an Employee', 'Update an employee role']
         },
     
   ])
@@ -44,20 +43,13 @@ function init() {                                           // Initialize
 function firstIf(data) {                            //INITIAL QUESTIONS
 
   if (data.doWhat =='View Departments'){
-    db.query('SELECT * FROM departments;', function (err, results) {  //      VIEW ALL DEPARTMENTS
-      console.log('');
-      console.info('------All Departments------')
-      console.log(results);});
-      console.log('');
+    viewAllDepartments()
       init()
 
  }else if (data.doWhat =='View Roles'){
-  db.query('SELECT * FROM roles;', function (err, results) {        // VIEW ALL ROLES
-    console.log('');
-    console.info('------All Roles------')
-    console.log(results);});
-    console.log('');
-    init()            
+
+  viewAllRoles()
+  init()            
  
   }else if (data.doWhat =='View Employees'){
     db.query('SELECT * FROM employees;', function (err, results) {        // VIEW ALL ROLES
@@ -78,16 +70,16 @@ function firstIf(data) {                            //INITIAL QUESTIONS
       }else if (data.doWhat =='Add a Department'){
         departmentQuestions()
 
-
+      }else if (data.doWhat =='Add a Role'){
+        rolesQuestions()
+        
  }};
  
 
 
 
-
-
-
-//                                                                ADD A DEPARTMENT
+//                                                                  DEPARTMENT FUNCTIONS
+//                                                                WHEN  ADD A DEPARTMENT HAS BEEN SELECTED, ASKS THESE QUESTIONS
  function departmentQuestions() {
   inquirer
   .prompt([
@@ -98,19 +90,84 @@ function firstIf(data) {                            //INITIAL QUESTIONS
         }
   ])
   .then((response) =>{ // user answers stored in response
-   addDepartment(response)                  //calls write to file
+   addDepartment(response)                                    //calls add department function
   });
+  viewAllDepartments()                                      // displays all departments after the change
 };
+
+function viewAllDepartments(){
+  db.query('SELECT * FROM departments;', function (err, results) {    // VIEW ALL DEPARTMENTS
+  console.log('');
+  console.info('------All Departments------')
+  console.log(results);});       
+}
 
 function addDepartment(data){
   db.query(`INSERT INTO departments (dept_name) `+
-            `VALUES ('${data.addDepartment}');`
+          `VALUES ('${data.addDepartment}');`
           )
-  db.query('SELECT * FROM departments;', function (err, results) {  //      VIEW ALL DEPARTMENTS
-    console.log('');
-    console.info('------All Departments------')
-    console.log(results);});       
+  console.log(`${data.addDepartment} added to Departments table`);
+  console.log('')
+  init()
 }
+
+
+//                                                              ROLE FUNCTIONS
+//                                                                  Asks questions when roles questions is called
+function rolesQuestions() {
+  inquirer
+  .prompt([
+        {
+          type: 'input',
+          message: "Enter Role Title",
+          name: 'rollTitle',
+        },
+        {
+          type: 'input',
+          message: "Enter Role Salary",
+          name: 'roleSalary',
+        },
+        {
+          type: 'input',
+          message: "Enter Role'S Department ID",
+          name: 'roleDeptID',
+        }
+  ])
+  .then((response) =>{ // user answers stored in response
+   addRole(response)
+                                  //calls add rolefunction
+  });
+  
+
+                                        // displays all roles after the change
+};
+
+function viewAllRoles(){
+  db.query('SELECT * FROM roles;', function (err, results) {    // VIEW ALL Roles
+  console.log('');
+  console.info('------All Roles------')
+  console.log(results);});       
+}
+
+function addRole(data){
+  db.query(`INSERT INTO roles (title, salary, department_id)`+
+          `VALUES ('${data.rollTitle}',${data.roleSalary},${data.roleDeptID});`
+          )
+  console.log(`${data.rollTitle} added to Roles table`);
+  console.log('')
+  viewAllRoles()   
+  init()
+}
+
+
+
+
+
+
+
+
+
+
 
 
 
