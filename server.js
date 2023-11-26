@@ -20,6 +20,8 @@ const questions = [
 
 
 
+
+
 function init() {                                           // Initialize 
   inquirer
   .prompt([
@@ -37,7 +39,9 @@ function init() {                                           // Initialize
   });
 }
 
-function firstIf(data) {                            // write to file function, if shapetype is one of three shapes, runs that code
+
+
+function firstIf(data) {                            //INITIAL QUESTIONS
 
   if (data.doWhat =='View Departments'){
     db.query('SELECT * FROM departments;', function (err, results) {  //      VIEW ALL DEPARTMENTS
@@ -63,8 +67,59 @@ function firstIf(data) {                            // write to file function, i
       console.log('');
       init()            
    
+    }else if (data.doWhat =='View Employees'){
+      db.query('SELECT * FROM employees;', function (err, results) {        // VIEW ALL ROLES
+        console.log('');
+        console.info('------All Employees------')
+        console.log(results);});
+        console.log('');
+        init() 
+
+      }else if (data.doWhat =='Add a Department'){
+        departmentQuestions()
+
+
  }};
  
+
+
+
+
+
+
+//                                                                ADD A DEPARTMENT
+ function departmentQuestions() {
+  inquirer
+  .prompt([
+        {
+          type: 'input',
+          message: "Enter Department Name",
+          name: 'addDepartment',
+        }
+  ])
+  .then((response) =>{ // user answers stored in response
+   addDepartment(response)                  //calls write to file
+  });
+};
+
+function addDepartment(data){
+  db.query(`INSERT INTO departments (dept_name) `+
+            `VALUES ('${data.addDepartment}');`
+          )
+  db.query('SELECT * FROM departments;', function (err, results) {  //      VIEW ALL DEPARTMENTS
+    console.log('');
+    console.info('------All Departments------')
+    console.log(results);});       
+}
+
+
+
+
+
+
+
+
+
 
 
 
