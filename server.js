@@ -21,7 +21,7 @@ const questions = [
   'What would you like to do?'
   ];
 
-function init() {                                           // Initialize 
+function init() {                                           // --------------------INITIAL QUESTIONS------------------------
   inquirer
   .prompt([
       {
@@ -40,45 +40,38 @@ function init() {                                           // Initialize
 
 
 
-function firstIf(data) {                            //INITIAL QUESTIONS
-
-  if (data.doWhat =='View Departments'){
+function firstIf(data) {                                 //---------------------INITIAL IF BLOCK-------------------------
+//                                                            When a response is selected, runs corresponding function which will then continue the process if need be
+  if (data.doWhat =='View Departments'){                                                
     viewAllDepartments()
-      init()
 
- }else if (data.doWhat =='View Roles'){
+  }else if (data.doWhat =='View Roles'){
+    viewAllRoles()
 
-  viewAllRoles()
-  init()            
- 
   }else if (data.doWhat =='View Employees'){
-    db.query('SELECT * FROM employees;', function (err, results) {        // VIEW ALL ROLES
-      console.log('');
-      console.info('------All Employees------')
-      console.log(results);});
-      console.log('');
-      init()            
-   
-    }else if (data.doWhat =='View Employees'){
-      db.query('SELECT * FROM employees;', function (err, results) {        // VIEW ALL ROLES
-        console.log('');
-        console.info('------All Employees------')
-        console.log(results);});
-        console.log('');
-        init() 
+    viewAllEmployees()            
 
-      }else if (data.doWhat =='Add a Department'){
-        departmentQuestions()
+  }else if (data.doWhat =='Add a Department'){
+    departmentQuestions()
 
-      }else if (data.doWhat =='Add a Role'){
-        rolesQuestions()
-        
+  }else if (data.doWhat =='Add a Role'){
+    rolesQuestions()
+
+  }else if (data.doWhat =='Add an Employee'){
+    employeeQuestions()
+  
+  }else if (data.doWhat =='Update an employee role'){
+    
+
  }};
  
 
 
 
-//                                                                  DEPARTMENT FUNCTIONS
+
+
+
+//                                                                  ------------------DEPARTMENT FUNCTIONS------------------------
 //                                                                WHEN  ADD A DEPARTMENT HAS BEEN SELECTED, ASKS THESE QUESTIONS
  function departmentQuestions() {
   inquirer
@@ -91,15 +84,19 @@ function firstIf(data) {                            //INITIAL QUESTIONS
   ])
   .then((response) =>{ // user answers stored in response
    addDepartment(response)                                    //calls add department function
+   viewAllDepartments()                                      // displays all departments after the change
   });
-  viewAllDepartments()                                      // displays all departments after the change
+
 };
 
 function viewAllDepartments(){
   db.query('SELECT * FROM departments;', function (err, results) {    // VIEW ALL DEPARTMENTS
   console.log('');
   console.info('------All Departments------')
-  console.log(results);});       
+  // res.json(results)
+  console.table(results)
+  init()  
+});       
 }
 
 function addDepartment(data){
@@ -108,11 +105,16 @@ function addDepartment(data){
           )
   console.log(`${data.addDepartment} added to Departments table`);
   console.log('')
-  init()
+
 }
 
 
-//                                                              ROLE FUNCTIONS
+
+
+
+
+
+//                                                              -------------------------ROLE FUNCTIONS---------------------------
 //                                                                  Asks questions when roles questions is called
 function rolesQuestions() {
   inquirer
@@ -135,19 +137,17 @@ function rolesQuestions() {
   ])
   .then((response) =>{ // user answers stored in response
    addRole(response)
-                                  //calls add rolefunction
+   viewAllRoles()// displays all roles after the change //calls add rolefunction
   });
-  
-
-                                        // displays all roles after the change
 };
 
 function viewAllRoles(){
   db.query('SELECT * FROM roles;', function (err, results) {    // VIEW ALL Roles
   console.log('');
-  console.info('------All Roles------')
-  console.log(results);});       
-}
+  console.info('------All Roles------');
+  console.table(results);
+  init();  
+})};
 
 function addRole(data){
   db.query(`INSERT INTO roles (title, salary, department_id)`+
@@ -156,28 +156,59 @@ function addRole(data){
   console.log(`${data.rollTitle} added to Roles table`);
   console.log('')
   viewAllRoles()   
-  init()
 }
 
 
+//                                               -------------------------EMPLOYEE FUNCTIONS---------------------------
 
+function employeeQuestions() {
+  inquirer
+  .prompt([
+        {
+          type: 'input',
+          message: "Enter First Name",
+          name: 'firstname',
+        },
+        {
+          type: 'input',
+          message: "Enter Last Name",
+          name: 'lastname',
+        },
+        {
+          type: 'input',
+          message: "Enter Role Id",
+          name: 'roleId',
+        },
+        {
+          type: 'input',
+          message: "Enter Manager Id (if none enter 'NULL')",
+          name: 'managerId',
+        }
+  ])
+  .then((response) =>{ // user answers stored in response
+    addEmployee(response)
+    viewAllEmployees()// displays all roles after the change //calls add rolefunction
+  });
+}
 
+  function addEmployee(data){
+    db.query(`INSERT INTO employees (first_name, last_name, role_id, manager_id)`+
+            `VALUES ('${data.firstname}','${data.lastname}',${data.roleId},${data.managerId});`)
+    console.log(`${data.firstname}${data.lastname} added to Employee table`);
+  }
+  
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  function viewAllEmployees(){
+    db.query('SELECT e.id AS employee_id, e.first_name, e.last_name, r.title AS role_title, m.first_name AS manager_first_name, m.last_name AS manager_last_name FROM employees e JOIN roles r ON e.role_id = r.id LEFT JOIN employees m ON e.manager_id = m.id;'
+      , function (err, results) {        // VIEW ALL ROLES
+      console.log('');
+      console.info('------All Employees------')
+      console.table(results);
+      init();
+    });
+    };
+    
+  
 
 
 init()
