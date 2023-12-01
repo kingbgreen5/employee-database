@@ -1,11 +1,11 @@
 
 const mysql = require('mysql2');
 const inquirer = require('inquirer');
-//                                                        FUNCTIONS WHICH PREFORM QUERIES INTO THE DB
-// const { viewAllDepartments, addDepartment, writeToFile } = require('./queryfunct/query');
 
 
-const db = mysql.createConnection(
+
+ //                                                                  --------------------CONNECTION------------------------
+const db = mysql.createConnection(       
   {
     host: 'localhost',
     // MySQL username,
@@ -17,18 +17,20 @@ const db = mysql.createConnection(
   console.log(`Connected to the employee_db database.`)
 );
 
-const questions = [
+
+
+ //                                                            --------------------INITIAL QUESTIONS------------------------
+ const questions = [
   'What would you like to do?'
   ];
-
-function init() {                                           // --------------------INITIAL QUESTIONS------------------------
+function init() {                                          
   inquirer
   .prompt([
       {
           type: 'list',
           message: questions[0],
           name: 'doWhat', 
-          choices: ['View Departments', 'View Roles','View Employees','Add a Department', 'Add a Role', 'Add an Employee', 'Update an employee role']
+          choices: ['View Departments', 'View Roles','View Employees','Add a Department',  'Add an Employee', 'Add a Role', 'Update an employee role']
         },
     
   ])
@@ -39,8 +41,8 @@ function init() {                                           // -----------------
 }
 
 
-
-function firstIf(data) {                                 //---------------------INITIAL IF BLOCK-------------------------
+//                                                              ---------------------INITIAL IF BLOCK-------------------------
+function firstIf(data) {                                       
 //                                                            When a response is selected, runs corresponding function which will then continue the process if need be
   if (data.doWhat =='View Departments'){                                                
     viewAllDepartments()
@@ -61,18 +63,16 @@ function firstIf(data) {                                 //---------------------
     employeeQuestions()
   
   }else if (data.doWhat =='Update an employee role'){
-    
+    employeeUpdateQuestions()
 
  }};
  
 
 
+//                            -----------------------------------------------------DEPARTMENT FUNCTIONS-----------------------------------------------------
+//                                                               
 
-
-
-
-//                                                                  ------------------DEPARTMENT FUNCTIONS------------------------
-//                                                                WHEN  ADD A DEPARTMENT HAS BEEN SELECTED, ASKS THESE QUESTIONS
+//                                                                               ----DEPARTMENT QUESTIONS----
  function departmentQuestions() {
   inquirer
   .prompt([
@@ -83,14 +83,15 @@ function firstIf(data) {                                 //---------------------
         }
   ])
   .then((response) =>{ // user answers stored in response
-   addDepartment(response)                                    //calls add department function
-   viewAllDepartments()                                      // displays all departments after the change
+   addDepartment(response)                                   
+   viewAllDepartments()                                      
   });
 
 };
 
+//                                                                              ----VIEW DEPARTMENTS----
 function viewAllDepartments(){
-  db.query('SELECT * FROM departments;', function (err, results) {    // VIEW ALL DEPARTMENTS
+  db.query('SELECT * FROM departments;', function (err, results) {    
   console.log('');
   console.info('------All Departments------')
   // res.json(results)
@@ -99,6 +100,7 @@ function viewAllDepartments(){
 });       
 }
 
+//                                                                              ----ADD DEPARTMENT----
 function addDepartment(data){
   db.query(`INSERT INTO departments (dept_name) `+
           `VALUES ('${data.addDepartment}');`
@@ -110,15 +112,12 @@ function addDepartment(data){
 
 
 
+//                            -----------------------------------------------------ROLE FUNCTIONS-----------------------------------------------------
 
-
-
-
-//                                                              -------------------------ROLE FUNCTIONS---------------------------
-//                                                                  Asks questions when roles questions is called
+//                                                                             ----ROLES QUESTIONS----
 function rolesQuestions() {
-  inquirer
-  .prompt([
+  return inquirer.prompt
+  ([
         {
           type: 'input',
           message: "Enter Role Title",
@@ -137,18 +136,18 @@ function rolesQuestions() {
   ])
   .then((response) =>{ // user answers stored in response
    addRole(response)
-   viewAllRoles()// displays all roles after the change //calls add rolefunction
   });
-};
 
+};
+ //                                                                            ----VIEW ROLES----
 function viewAllRoles(){
-  db.query('SELECT * FROM roles;', function (err, results) {    // VIEW ALL Roles
+  db.query('SELECT * FROM roles;', function (err, results) {                                  
   console.log('');
   console.info('------All Roles------');
   console.table(results);
   init();  
 })};
-
+//                                                                             ----ADD ROLES----
 function addRole(data){
   db.query(`INSERT INTO roles (title, salary, department_id)`+
           `VALUES ('${data.rollTitle}',${data.roleSalary},${data.roleDeptID});`
@@ -159,11 +158,10 @@ function addRole(data){
 }
 
 
-//                                               -------------------------EMPLOYEE FUNCTIONS---------------------------
+//                       --------------------------------------------------------EMPLOYEE FUNCTIONS-----------------------------------------------------
 
 function employeeQuestions() {
-  inquirer
-  .prompt([
+  return inquirer.prompt([
         {
           type: 'input',
           message: "Enter First Name",
@@ -188,35 +186,104 @@ function employeeQuestions() {
   .then((response) =>{ // user answers stored in response
     addEmployee(response)
     viewAllEmployees()// displays all roles after the change //calls add rolefunction
+   
   });
-}
 
+}
+ //                                                                          ----ADD EMPLOYEES----
   function addEmployee(data){
     db.query(`INSERT INTO employees (first_name, last_name, role_id, manager_id)`+
             `VALUES ('${data.firstname}','${data.lastname}',${data.roleId},${data.managerId});`)
     console.log(`${data.firstname}${data.lastname} added to Employee table`);
   }
   
-
+ //                                                                         ----VIEW EMPLOYEES----
   function viewAllEmployees(){
-    db.query('SELECT e.id AS employee_id, e.first_name, e.last_name, r.title AS role_title, m.first_name AS manager_first_name, m.last_name AS manager_last_name FROM employees e JOIN roles r ON e.role_id = r.id LEFT JOIN employees m ON e.manager_id = m.id;'
-      , function (err, results) {        // VIEW ALL ROLES
+    db.query("SELECT e.id AS employee_id, e.first_name, e.last_name, r.title AS role_title, CONCAT(m.first_name, ' ', m.last_name) AS manager_full_name FROM employees e JOIN roles r ON e.role_id = r.id LEFT JOIN employees m ON e.manager_id = m.id;"
+      , function (err, results) {         // VIEW ALL ROLES
       console.log('');
-      console.info('------All Employees------')
+      console.info('------All Employees------')  
       console.table(results);
+  
       init();
     });
     };
     
-  
+    //                                                                       ----EMPLOYEE UPDATE----
+
+    function employeeUpdateQuestions() {                                    
+    // Execute the query
+  db.query('SELECT id, CONCAT(first_name, " ", last_name) AS full_name FROM employees;', (error, results) => {
+      if (error) {
+        console.error(error);
+        db.end();
+      } else {
+        // Prompts the user to select from a list of options
+        inquirer
+          .prompt([
+            {
+              type: 'list',
+              name: 'selectedemployee',
+              message: 'Choose an employee:',
+              choices: results.map((employee) => ({ name: employee.full_name, value: employee.id })),
+            },
+          
+          ])
+          .then((response) => {
+            console.log(`You selected employee with ID ${response.selectedemployee}`);
+            let selectedEmployeeID = response.selectedemployee
+            // let selectedEmployeeName = results.full_name
+
+            db.query('SELECT id, title FROM roles;',function(err, resultsOfRoleQuery) {
+              
+              inquirer
+              .prompt([
+                {
+                  type: 'list',
+                  name: 'selectedRole',
+                  message: 'Which Role do you want to assign the selected employee?:',
+                  choices: resultsOfRoleQuery.map((role) => ({ name: role.title, value: role.id })),
+                }
+              ])
+              .then((response) => {
+                let selectedRoleID = response.selectedRole
+                console.log(`You selected Employee ${selectedEmployeeID} and replaced their role with ID ${selectedRoleID}`);
+               
+                db.query(
+                  'UPDATE employees ' +
+                  'SET role_id = ? ' +
+                  'WHERE id = ?',
+                  [selectedRoleID, selectedEmployeeID],
+                  function (err, results) {
+                    if (err) {
+                      console.error(err);
+                      db.end();
+                    }
+                  }
+                );
+                  viewAllEmployees()
+              })
+              .catch((inquirerError) => {
+                console.error(inquirerError);
+              });
+              })
+          })
+          .catch((inquirerError) => {
+            console.error(inquirerError);
+          });
+      }
+    });
+  }
 
 
-init()
+  db.query('SELECT id, CONCAT(first_name, " ", last_name) AS full_name FROM employees;', (error, results) => {
+    if (error) {
+      console.error(error);
+      db.end();
+    }})
 
-
-
-
-
+//                   --------------------------------------------------------INITIATE PROGRAM WHEN START IS RUN-----------------------------------------------------
+init()                                    
 
 
 
